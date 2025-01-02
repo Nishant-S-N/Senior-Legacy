@@ -1,5 +1,4 @@
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-app.js";
-// --- UPDATED IMPORT: Added sendPasswordResetEmail ---
 import { getAuth, createUserWithEmailAndPassword, signInWithEmailAndPassword, onAuthStateChanged, signOut, sendEmailVerification, sendPasswordResetEmail } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-auth.js";
 import { getFirestore, doc, setDoc, getDoc, collection, addDoc, getDocs, query, orderBy, deleteDoc, where, updateDoc } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-firestore.js";
 
@@ -35,7 +34,7 @@ if (isLoginPage) {
     const usernameInput = document.getElementById("usernameInput");
     
     const usernameFeedback = document.getElementById("usernameFeedback");
-    const forgotPasswordLink = document.getElementById("forgotPasswordLink"); // NEW
+    const forgotPasswordLink = document.getElementById("forgotPasswordLink");
     let usernameTypingTimer; 
 
     let isLoginMode = false; 
@@ -85,7 +84,7 @@ if (isLoginPage) {
         togglePassword.innerText = type === "password" ? "👁️" : "🙈";
     });
 
-    // --- UPDATED TOGGLE LOGIC: Hides/Shows the Forgot Password button ---
+
     toggleLink.addEventListener("click", () => {
         isLoginMode = !isLoginMode; 
         messageBox.innerText = ""; 
@@ -107,11 +106,11 @@ if (isLoginPage) {
             questionText.innerText = "Already signed up?";
             toggleLink.innerText = "Login here";
             usernameGroup.style.display = "block"; 
-            if(forgotPasswordLink) forgotPasswordLink.style.display = "none"; // HIDE
+            if(forgotPasswordLink) forgotPasswordLink.style.display = "none";
         }
     });
 
-    // --- NEW: Forgot Password Button Logic ---
+    //Forgot Password Button Logic
     if (forgotPasswordLink) {
         forgotPasswordLink.addEventListener("click", async () => {
             const email = document.getElementById("emailInput").value.trim();
@@ -185,7 +184,6 @@ if (isLoginPage) {
         if (isLoginMode) {
             signInWithEmailAndPassword(auth, email, password)
                 .then(async (userCredential) => {
-                    // if (!userCredential.user.emailVerified) { ... }
                     messageBox.style.color = "#2ed573";
                     messageBox.innerText = "Successfully logged in!";
                     window.location.href = "home.html";
@@ -281,7 +279,6 @@ if (isHomePage) {
 
     const homeBtn = document.getElementById("homeBtn");
 
-    // Helper Function to generate beautiful Avatars (Defaulting to Person Icon)
     function getAvatarHtml(picUrl, displayName, size = 36) {
         if (picUrl) {
             return `<img src="${picUrl}" style="width: ${size}px; height: ${size}px; border-radius: 50%; object-fit: cover; margin-right: 12px; cursor: pointer; border: 1px solid #dfe6e9;" class="feed-avatar" data-username="${displayName}">`;
@@ -290,7 +287,7 @@ if (isHomePage) {
         }
     }
 
-    // Clickable Usernames Global Logic
+    // Clickable Usernames
     function triggerProfileSearch(username) {
         viewPostModal.style.display = "none"; 
         searchContainer.style.display = "flex";
@@ -383,7 +380,6 @@ if (isHomePage) {
                 return;
             }
 
-            // Generate Public Profile Card with BIO & AVATAR
             if (activeSearchQuery !== "") {
                 let publicBio = "No bio yet.";
                 let publicProfilePic = null;
@@ -482,7 +478,7 @@ if (isHomePage) {
                         ${deleteBtnHtml}
                     `;
 
-                    // Clickable Username (Inside Post Modal)
+                    // Clickable Username (Inside Post)
                     fullPostContent.querySelectorAll('.feed-username, .feed-avatar').forEach(el => {
                         el.addEventListener('click', (e) => {
                             e.stopPropagation();
@@ -578,7 +574,7 @@ if (isHomePage) {
         }
     });
 
-    // --- NEW: PROFILE PICTURE UPLOAD & DELETE LOGIC ---
+    //PROFILE PICTURE UPLOAD & DELETE LOGIC
     const profilePicInput = document.getElementById("profilePicInput");
     const profilePicDisplay = document.getElementById("profilePicDisplay");
     const defaultAvatarDisplay = document.getElementById("defaultAvatarDisplay");
@@ -679,7 +675,6 @@ if (isHomePage) {
                 profilePic: newPicUrl
             });
 
-            // Force update all old posts and comments to instantly show new picture
             const postsQuery = query(collection(db, "posts"), where("authorEmail", "==", auth.currentUser.email));
             const postsSnapshot = await getDocs(postsQuery);
             postsSnapshot.forEach(async (postDoc) => {
@@ -730,7 +725,7 @@ if (isHomePage) {
     });
 
     editProfileBtn.addEventListener("click", () => {
-        profileAvatarContainer.style.display = "none"; // Hide picture while editing name
+        profileAvatarContainer.style.display = "none";
         profileNicknameDisplay.style.display = "none";
         profileEmailDisplay.style.display = "none";
         profileBioDisplay.style.display = "none";
@@ -1025,9 +1020,7 @@ if (isHomePage) {
         }
     });
 
-    // ==========================================
     // COMMENTS (REPLY) SYSTEM
-    // ==========================================
     const commentTextarea = document.getElementById("commentTextarea");
     const commentFileInput = document.getElementById("commentFileInput");
     const commentUploadBtn = document.getElementById("commentUploadBtn");
@@ -1136,7 +1129,7 @@ if (isHomePage) {
                     <div style="margin-left: 40px;">${mediaHtml}</div>
                 `;
                 
-                // Clickable Username (In Comments)
+                // Clickable Username (Comments)
                 commentDiv.querySelectorAll('.feed-username, .feed-avatar').forEach(el => {
                     el.addEventListener('click', (e) => {
                         e.stopPropagation();

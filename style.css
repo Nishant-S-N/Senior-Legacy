@@ -16,7 +16,7 @@ input, textarea {
     font-family: inherit;
 }
 
-/*LOGIN PAGE STYLES (index.html)*/
+/*index*/
 .login-page {
     display: flex;
     justify-content: center;
@@ -36,16 +36,12 @@ input, textarea {
     text-align: center;
 }
 
-/* --- UPDATED: Removed the gradient, matches dashboard username color --- */
 #formTitle {
     margin-top: 0;
     color: #6c5ce7; 
     font-size: 28px;
     font-weight: 700;
 }
-
-
-
 
 .form-box p { color: #636e72; font-size: 14px; margin-bottom: 25px; }
 
@@ -125,12 +121,11 @@ input, textarea {
 #message { margin-top: 15px; font-weight: bold; font-size: 13px; }
 .toggle-container { margin-top: 25px; font-size: 14px; color: #636e72; }
 
-/* Updated toggle link to match the softer color */
 #toggleLink { color: #6c5ce7; text-decoration: none; font-weight: bold; cursor: pointer; transition: 0.2s; }
 #toggleLink:hover { color: #764ba2; }
 
 
-/*HOME PAGE STYLES (home.html)*/
+/*home*/
 header {
     background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
     color: white;
@@ -189,7 +184,7 @@ main {
     text-align: center;
 }
 
-/*BOTTOM NAVIGATION BAR (Glassmorphism)*/
+/*BOTTOM NAVIGATION BAR*/
 .bottom-bar {
     position: fixed;
     bottom: 0;
@@ -505,7 +500,7 @@ main {
     font-size: 14px;
 }
 
-/*AVATAR & PROFILE PIC STYLES*/
+/*AVATAR & PROFILE PIC*/
 #profileAvatarContainer:hover {
     transform: scale(1.05);
     opacity: 0.9;
@@ -518,7 +513,7 @@ main {
     opacity: 0.8;
 }
 
-/*DELETE PROFILE PIC BUTTON*/
+/*DELETE BUTTON profile pic*/
 #removeProfilePicBtn:hover {
     background-color: #fff0f0 !important;
     border-color: #ff4757 !important;
