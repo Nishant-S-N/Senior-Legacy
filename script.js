@@ -701,7 +701,6 @@ if (isHomePage) {
             profilePicInput.value = "";
         }
     });
-    // ------------------------------------------
 
     //profile logic
     profileBtn.addEventListener("click", () => {
