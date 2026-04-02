@@ -1,0 +1,125 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Senior's Legacy - Home</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+
+<body>
+    <header>
+        <div class="header-left">
+            <h1>Senior's Legacy</h1>
+        </div>
+    </header>
+
+    <nav class="category-bar" id="categoryBar">
+        <button class="category-btn active">All</button>
+        <button class="category-btn">Department</button>
+        <button class="category-btn">Library</button>
+        <button class="category-btn">Secret Places</button>
+        <button class="category-btn">Campus</button>
+    </nav>
+    
+    <main>
+        <div class="search-container" id="searchContainer" style="display: none; background: white; padding: 10px 20px; border-radius: 10px; margin-bottom: 20px; box-shadow: 0px 4px 10px rgba(0, 0, 0, 0.05); align-items: center; position: relative;">
+            <span style="color: #007BFF; font-weight: bold; font-size: 18px; position: absolute; left: 32px;">@</span>
+            <input type="text" id="searchUserInput" placeholder="Search a senior's username..." style="width: 100%; padding: 12px 12px 12px 30px; border: 1px solid #ddd; border-radius: 20px; font-size: 15px; outline: none; box-sizing: border-box;">
+            <button id="clearSearchBtn" style="display: none; position: absolute; right: 30px; background: #ff4d4d; color: white; border: none; border-radius: 50%; width: 24px; height: 24px; cursor: pointer; font-weight: bold; line-height: 1;">✕</button>
+        </div>
+
+        <div class="feed-container" id="feedContainer">
+            <h3 style="color: #666;">Loading advice from seniors...</h3>
+        </div>
+    </main>
+
+    <div id="postModal" class="modal-overlay">
+        <div class="modal-content">
+            <div class="modal-header">
+                <button id="closeModalBtn" class="cancel-btn">Cancel</button>
+                <h3 style="margin: 0;">Create Post</h3>
+                <button id="submitPostBtn" class="post-btn">Post</button>
+            </div>
+            
+            <textarea id="postTextarea" placeholder="Share your advice... Use #Library, #Campus, #Department, or #SecretPlaces to auto-categorize!"></textarea>
+            
+            <div class="modal-footer">
+                <input type="file" id="fileInput" accept="image/*,video/*,application/pdf" hidden>
+                <button id="uploadFileBtn" class="upload-icon-btn" title="Attach Photo/Video/PDF">
+                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect>
+                        <circle cx="8.5" cy="8.5" r="1.5"></circle>
+                        <polyline points="21 15 16 10 5 21"></polyline>
+                    </svg>
+                </button>
+                <span id="fileNameDisplay" class="file-name-text"></span>
+            </div>
+        </div>
+    </div>
+
+    <div id="viewPostModal" class="modal-overlay">
+        <div class="modal-content" style="max-height: 90vh; overflow-y: auto;">
+            <div class="modal-header">
+                <h3 style="margin: 0;">Post Details</h3>
+                <button id="closeViewModalBtn" class="cancel-btn">Close</button>
+            </div>
+            <div id="fullPostContent"></div>
+        </div>
+    </div>
+
+    <div id="profileModal" class="modal-overlay">
+        <div class="modal-content" style="max-height: 90vh; overflow-y: auto; text-align: center;">
+            <div class="modal-header">
+                <h3 style="margin: 0;">My Profile</h3>
+                <button id="closeProfileBtn" class="cancel-btn">Close</button>
+            </div>
+            <div style="padding: 20px 0;">
+                <div style="font-size: 50px; margin-bottom: 10px;">👤</div>
+                <h2 id="profileNicknameDisplay" style="margin: 0; color: #007BFF;">Loading...</h2>
+                <p id="profileEmailDisplay" style="color: #666; font-size: 14px; margin-top: 5px;"></p>
+                <button id="actualLogoutBtn" style="background: #ff4d4d; color: white; border: none; padding: 8px 20px; border-radius: 20px; cursor: pointer; font-weight: bold; margin-top: 10px;">Log Out</button>
+            </div>
+            <hr style="border: 0; border-top: 1px solid #eee; margin: 20px 0;">
+            <h3 style="text-align: left; margin-bottom: 15px;">My Posts</h3>
+            <div id="myPostsContainer" style="text-align: left;"></div>
+        </div>
+    </div>
+
+    <nav class="bottom-bar">
+        <div class="nav-item">
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"></path>
+                <polyline points="9 22 9 12 15 12 15 22"></polyline>
+            </svg>
+            <span>Home</span>
+        </div>
+        
+        <div class="nav-item" id="searchToggleBtn">
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <circle cx="11" cy="11" r="8"></circle>
+                <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
+            </svg>
+            <span>Search</span>
+        </div>
+
+        <button id="writeAdviceBtn">
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <line x1="12" y1="5" x2="12" y2="19"></line>
+                <line x1="5" y1="12" x2="19" y2="12"></line>
+            </svg>
+            <span>Post</span>
+        </button>
+
+        <div class="nav-item" id="profileBtn">
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path>
+                <circle cx="12" cy="7" r="4"></circle>
+            </svg>
+            <span>Profile</span>
+        </div>
+    </nav>
+
+    <script type="module" src="script.js"></script>
+</body>
+</html>
