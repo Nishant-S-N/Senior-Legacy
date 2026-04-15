@@ -1,6 +1,6 @@
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-app.js";
 import { getAuth, createUserWithEmailAndPassword, signInWithEmailAndPassword, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-auth.js";
-import { getFirestore, doc, setDoc, getDoc, collection, addDoc, getDocs, query, orderBy, deleteDoc, where } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-firestore.js";
+import { getFirestore, doc, setDoc, getDoc, collection, addDoc, getDocs, query, orderBy, deleteDoc, where, updateDoc } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-firestore.js";
 
 // 1. FIREBASE SETUP
 const firebaseConfig = {
@@ -40,26 +40,24 @@ if (isLoginPage) {
 
     let isLoginMode = false; 
 
-    // --- NEW: STRICT USERNAME CHECKER ---
     usernameInput.addEventListener("input", (e) => {
         clearTimeout(usernameTypingTimer);
         const nickname = e.target.value.trim();
 
         if (!nickname) {
-            usernameFeedback.style.color = "#666";
+            usernameFeedback.style.color = "#b2bec3";
             usernameFeedback.innerText = "Must have numeric, small letter, capital letter, and one special character (@, #, $, &, -, _). 3-15 chars, no spaces.";
             return;
         }
 
-        // Regex enforcing upper, lower, number, and specific special characters
         const nicknameRegex = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@#$&-_])[A-Za-z\d@#$&-_]{3,15}$/;
         if (!nicknameRegex.test(nickname)) {
-            usernameFeedback.style.color = "red";
+            usernameFeedback.style.color = "#ff4757";
             usernameFeedback.innerText = "❌ Missing capital, small, numeric, or special char. No spaces allowed.";
             return;
         }
 
-        usernameFeedback.style.color = "#007BFF";
+        usernameFeedback.style.color = "#667eea";
         usernameFeedback.innerText = "Checking availability...";
 
         usernameTypingTimer = setTimeout(async () => {
@@ -68,19 +66,18 @@ if (isLoginPage) {
                 const querySnapshot = await getDocs(q);
                 
                 if (!querySnapshot.empty) {
-                    usernameFeedback.style.color = "red";
+                    usernameFeedback.style.color = "#ff4757";
                     usernameFeedback.innerText = "❌ Username already taken!";
                 } else {
-                    usernameFeedback.style.color = "green";
+                    usernameFeedback.style.color = "#2ed573";
                     usernameFeedback.innerText = "✅ Username available!";
                 }
             } catch (error) {
-                usernameFeedback.style.color = "red";
+                usernameFeedback.style.color = "#ff4757";
                 usernameFeedback.innerText = "❌ Error checking availability.";
             }
         }, 500); 
     });
-    // ------------------------------------
 
     togglePassword.addEventListener("click", () => {
         const type = passwordInput.getAttribute("type") === "password" ? "text" : "password";
@@ -93,7 +90,7 @@ if (isLoginPage) {
         messageBox.innerText = ""; 
 
         usernameInput.value = "";
-        usernameFeedback.style.color = "#666";
+        usernameFeedback.style.color = "#b2bec3";
         usernameFeedback.innerText = "Must have numeric, small letter, capital letter, and one special character (@, #, $, &, -, _). 3-15 chars, no spaces.";
 
         if (isLoginMode) {
@@ -119,7 +116,7 @@ if (isLoginPage) {
         const emailRegex = /^2\d00\d{7}[a-zA-Z0-9._-]+@dcrustm\.org$/i;
         
         if (!emailRegex.test(email)) {
-            messageBox.style.color = "red";
+            messageBox.style.color = "#ff4757";
             messageBox.innerText = "Error: Invalid university email.";
             return;
         }
@@ -128,51 +125,50 @@ if (isLoginPage) {
         const currentYearSuffix = parseInt(new Date().getFullYear().toString().slice(-2)); 
         
         if (batchYear < (currentYearSuffix - 5) || batchYear > currentYearSuffix) {
-            messageBox.style.color = "red";
+            messageBox.style.color = "#ff4757";
             messageBox.innerText = "Error: Invalid university email.";
             return;
         }
         
         if (!isLoginMode) {
             if (!nickname) {
-                messageBox.style.color = "red";
+                messageBox.style.color = "#ff4757";
                 messageBox.innerText = "Please provide a Nickname.";
                 return;
             }
 
-            // Also double-check the final sign-up button with the strict rules
             const nicknameRegex = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@#$&-_])[A-Za-z\d@#$&-_]{3,15}$/;
             if (!nicknameRegex.test(nickname)) {
-                messageBox.style.color = "red";
+                messageBox.style.color = "#ff4757";
                 messageBox.innerText = "Error: Nickname must have upper, lower, number, and special char (@, #, $, &, -, _).";
                 return;
             }
             
             if (usernameFeedback.innerText.includes("taken") || usernameFeedback.innerText.includes("❌")) {
-                messageBox.style.color = "red";
+                messageBox.style.color = "#ff4757";
                 messageBox.innerText = "Please fix your username before signing up.";
                 return;
             }
         }
 
-        messageBox.style.color = "black";
+        messageBox.style.color = "#2d3436";
         messageBox.innerText = "Processing...";
 
         if (isLoginMode) {
             signInWithEmailAndPassword(auth, email, password)
                 .then(() => {
-                    messageBox.style.color = "green";
+                    messageBox.style.color = "#2ed573";
                     messageBox.innerText = "Successfully logged in!";
                     window.location.href = "home.html";
                 })
                 .catch(() => {
-                    messageBox.style.color = "red";
+                    messageBox.style.color = "#ff4757";
                     messageBox.innerText = "Invalid email or password. Please try again.";
                 });
         } else {
             const passwordRegex = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@\-_&]).{8,}$/;
             if (!passwordRegex.test(password)) {
-                messageBox.style.color = "red";
+                messageBox.style.color = "#ff4757";
                 messageBox.innerText = "Password must be at least 8 characters, incl. 1 uppercase, 1 lowercase, 1 number, and 1 special char (@, -, _, &).";
                 return;
             }
@@ -201,12 +197,12 @@ if (isLoginPage) {
                     });
                 })
                 .then(() => {
-                    messageBox.style.color = "green";
+                    messageBox.style.color = "#2ed573";
                     messageBox.innerText = `Success!`;
                     window.location.href = "home.html";
                 })
                 .catch((error) => {
-                    messageBox.style.color = "red";
+                    messageBox.style.color = "#ff4757";
                     if (error.code === 'auth/email-already-in-use') {
                         messageBox.innerText = "This email is already registered. Try logging in!";
                     } else {
@@ -245,6 +241,32 @@ if (isHomePage) {
 
     let selectedCategory = "All";
     let currentUserNickname = "Senior"; 
+
+    const editProfileBtn = document.getElementById("editProfileBtn");
+    const editProfileForm = document.getElementById("editProfileForm");
+    const profileActionButtons = document.getElementById("profileActionButtons");
+    const editNicknameInput = document.getElementById("editNicknameInput");
+    const saveProfileBtn = document.getElementById("saveProfileBtn");
+    const cancelEditBtn = document.getElementById("cancelEditBtn");
+    const editFeedback = document.getElementById("editFeedback");
+
+    const homeBtn = document.getElementById("homeBtn");
+    if (homeBtn) {
+        homeBtn.addEventListener("click", () => {
+            searchContainer.style.display = "none";
+            searchUserInput.value = "";
+            activeSearchQuery = "";
+            if(clearSearchBtn) clearSearchBtn.style.display = "none";
+
+            categoryBtns.forEach(b => b.classList.remove("active"));
+            categoryBtns[0].classList.add("active"); 
+            selectedCategory = "All";
+
+            window.scrollTo(0, 0);
+
+            loadPosts("All");
+        });
+    }
 
     if (searchToggleBtn) {
         searchToggleBtn.addEventListener("click", () => {
@@ -287,7 +309,7 @@ if (isHomePage) {
     // LOAD MAIN FEED
     // ------------------------------------------
     async function loadPosts(categoryFilter) {
-        feedContainer.innerHTML = '<h3 style="color: #666;">Loading advice...</h3>';
+        feedContainer.innerHTML = '<h3 style="color: #a4b0be; text-align:center;">Loading advice...</h3>';
         try {
             const q = query(collection(db, "posts"), orderBy("createdAt", "desc"));
             const querySnapshot = await getDocs(q);
@@ -317,8 +339,8 @@ if (isHomePage) {
                             mediaHtml = `<video class="post-media" src="${post.mediaUrl}"></video>`;
                             fullMediaHtml = `<video class="full-post-media" src="${post.mediaUrl}" controls></video>`;
                         } else if (post.mediaType === 'pdf') {
-                            mediaHtml = `<div style="margin:10px 0; padding:10px; background:#eef5ff; border-radius:8px; color:#007BFF; font-weight:bold;">📄 View Attached PDF</div>`;
-                            fullMediaHtml = `<a href="${post.mediaUrl}" target="_blank" style="display:block; margin: 15px 0; padding: 15px; background: #007BFF; color: white; text-align: center; border-radius: 8px; font-weight: bold; text-decoration: none;">📄 Click to open Full PDF</a>`;
+                            mediaHtml = `<div style="margin:15px 0; padding:15px; background:#f1e4ff; border-radius:12px; color:#764ba2; font-weight:bold; text-align:center;">📄 View Attached PDF</div>`;
+                            fullMediaHtml = `<a href="${post.mediaUrl}" target="_blank" style="display:block; margin: 15px 0; padding: 15px; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; text-align: center; border-radius: 16px; font-weight: bold; text-decoration: none; box-shadow: 0 8px 20px rgba(118, 75, 162, 0.25);">📄 Click to open Full PDF</a>`;
                         } else {
                             mediaHtml = `<img class="post-media" src="${post.mediaUrl}" alt="Post image">`;
                             fullMediaHtml = `<img class="full-post-media" src="${post.mediaUrl}" alt="Post image">`;
@@ -342,7 +364,7 @@ if (isHomePage) {
                     postCard.addEventListener("click", () => {
                         let deleteBtnHtml = "";
                         if (auth.currentUser && auth.currentUser.email === post.authorEmail) {
-                            deleteBtnHtml = `<button id="deleteFeedPostBtn" style="background: #ff4d4d; color: white; border: none; padding: 10px; border-radius: 8px; cursor: pointer; margin-top: 20px; width: 100%; font-weight: bold; font-size: 16px;">🗑️ Delete Post</button>`;
+                            deleteBtnHtml = `<button id="deleteFeedPostBtn" style="background: linear-gradient(135deg, #ff4757 0%, #ff6b81 100%); color: white; border: none; padding: 12px; border-radius: 12px; cursor: pointer; margin-top: 20px; width: 100%; font-weight: bold; font-size: 16px; box-shadow: 0 4px 15px rgba(255, 71, 87, 0.3);">🗑️ Delete Post</button>`;
                         }
 
                         fullPostContent.innerHTML = `
@@ -383,14 +405,14 @@ if (isHomePage) {
 
             if (postsCount === 0) {
                 if (activeSearchQuery !== "") {
-                    feedContainer.innerHTML = `<h3 style="color: #666;">No posts found for user @${activeSearchQuery}.</h3>`;
+                    feedContainer.innerHTML = `<h3 style="color: #a4b0be; text-align:center;">No posts found for user @${activeSearchQuery}.</h3>`;
                 } else {
-                    feedContainer.innerHTML = `<h3 style="color: #666;">No advice in ${categoryFilter} yet. Be the first!</h3>`;
+                    feedContainer.innerHTML = `<h3 style="color: #a4b0be; text-align:center;">No advice in ${categoryFilter} yet. Be the first!</h3>`;
                 }
             }
         } catch (error) {
             console.error("Error loading posts:", error);
-            feedContainer.innerHTML = '<h3 style="color: red;">Failed to load feed. Check console.</h3>';
+            feedContainer.innerHTML = '<h3 style="color: #ff4757; text-align:center;">Failed to load feed. Check console.</h3>';
         }
     }
 
@@ -464,6 +486,9 @@ if (isHomePage) {
         profileModal.style.display = "flex";
         profileNicknameDisplay.innerText = currentUserNickname;
         profileEmailDisplay.innerText = auth.currentUser.email;
+        
+        cancelEditBtn.click();
+        
         loadMyPosts(); 
     });
 
@@ -475,8 +500,83 @@ if (isHomePage) {
         if (confirm("Are you sure you want to log out?")) signOut(auth);
     });
 
+    editProfileBtn.addEventListener("click", () => {
+        profileNicknameDisplay.style.display = "none";
+        profileActionButtons.style.display = "none";
+        editProfileForm.style.display = "flex";
+        
+        editNicknameInput.value = currentUserNickname;
+        editFeedback.style.color = "#a4b0be";
+        editFeedback.innerText = "Must have numeric, small, capital, and special char (@#$&-_). 3-15 chars, no spaces.";
+    });
+
+    cancelEditBtn.addEventListener("click", () => {
+        profileNicknameDisplay.style.display = "block";
+        profileActionButtons.style.display = "flex";
+        editProfileForm.style.display = "none";
+    });
+
+    saveProfileBtn.addEventListener("click", async () => {
+        const newNickname = editNicknameInput.value.trim();
+        
+        if (newNickname === currentUserNickname) {
+            cancelEditBtn.click();
+            return;
+        }
+
+        const nicknameRegex = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@#$&-_])[A-Za-z\d@#$&-_]{3,15}$/;
+        if (!nicknameRegex.test(newNickname)) {
+            editFeedback.style.color = "#ff4757";
+            editFeedback.innerText = "❌ Missing capital, small, numeric, or special char. No spaces allowed.";
+            return;
+        }
+
+        editFeedback.style.color = "#667eea";
+        editFeedback.innerText = "Checking availability & updating...";
+        saveProfileBtn.disabled = true;
+
+        try {
+            const q = query(collection(db, "users"), where("nickname", "==", newNickname));
+            const querySnapshot = await getDocs(q);
+            
+            if (!querySnapshot.empty) {
+                editFeedback.style.color = "#ff4757";
+                editFeedback.innerText = "❌ Username already taken!";
+                saveProfileBtn.disabled = false;
+                return;
+            }
+
+            await updateDoc(doc(db, "users", auth.currentUser.uid), {
+                nickname: newNickname
+            });
+
+            const postsQuery = query(collection(db, "posts"), where("authorEmail", "==", auth.currentUser.email));
+            const postsSnapshot = await getDocs(postsQuery);
+            
+            postsSnapshot.forEach(async (postDoc) => {
+                await updateDoc(doc(db, "posts", postDoc.id), {
+                    authorName: newNickname
+                });
+            });
+
+            currentUserNickname = newNickname;
+            profileNicknameDisplay.innerText = currentUserNickname;
+            
+            cancelEditBtn.click(); 
+            loadPosts(selectedCategory); 
+            loadMyPosts(); 
+            
+        } catch (error) {
+            console.error("Error updating profile:", error);
+            editFeedback.style.color = "#ff4757";
+            editFeedback.innerText = "❌ Error saving profile. Check console.";
+        }
+        
+        saveProfileBtn.disabled = false;
+    });
+
     async function loadMyPosts() {
-        myPostsContainer.innerHTML = '<p style="color: #666; text-align: center;">Loading your posts...</p>';
+        myPostsContainer.innerHTML = '<p style="color: #a4b0be; text-align: center;">Loading your posts...</p>';
         try {
             const q = query(collection(db, "posts"), orderBy("createdAt", "desc"));
             const querySnapshot = await getDocs(q);
@@ -495,7 +595,7 @@ if (isHomePage) {
                     let mediaHtml = '';
                     if (post.mediaUrl) {
                         if (post.mediaType === 'video') mediaHtml = `<video class="post-media" src="${post.mediaUrl}"></video>`;
-                        else if (post.mediaType === 'pdf') mediaHtml = `<div style="margin:10px 0; padding:10px; background:#eef5ff; border-radius:8px; color:#007BFF; font-weight:bold;">📄 Attached PDF</div>`;
+                        else if (post.mediaType === 'pdf') mediaHtml = `<div style="margin:10px 0; padding:10px; background:#f1e4ff; border-radius:12px; color:#764ba2; font-weight:bold; text-align:center;">📄 Attached PDF</div>`;
                         else mediaHtml = `<img class="post-media" src="${post.mediaUrl}" alt="Post image">`;
                     }
 
@@ -508,7 +608,7 @@ if (isHomePage) {
                         </div>
                         <div class="post-text">${post.text}</div>
                         ${mediaHtml}
-                        <button class="delete-my-post-btn" style="background: #ff4d4d; color: white; border: none; padding: 6px 12px; border-radius: 6px; cursor: pointer; font-weight: bold; font-size: 14px; margin-top: 10px; width: 100%;">🗑️ Delete</button>
+                        <button class="delete-my-post-btn" style="background: linear-gradient(135deg, #ff4757 0%, #ff6b81 100%); color: white; border: none; padding: 8px 12px; border-radius: 12px; cursor: pointer; font-weight: bold; font-size: 14px; margin-top: 10px; width: 100%; box-shadow: 0 4px 10px rgba(255, 71, 87, 0.2);">🗑️ Delete</button>
                     `;
 
                     const deleteBtn = postCard.querySelector('.delete-my-post-btn');
@@ -532,11 +632,11 @@ if (isHomePage) {
             });
 
             if (myCount === 0) {
-                myPostsContainer.innerHTML = `<p style="color: #666; text-align: center;">You haven't posted anything yet.</p>`;
+                myPostsContainer.innerHTML = `<p style="color: #a4b0be; text-align: center; font-weight:bold;">You haven't posted anything yet.</p>`;
             }
         } catch (error) {
             console.error(error);
-            myPostsContainer.innerHTML = '<p style="color: red; text-align: center;">Failed to load posts.</p>';
+            myPostsContainer.innerHTML = '<p style="color: #ff4757; text-align: center;">Failed to load posts.</p>';
         }
     }
 

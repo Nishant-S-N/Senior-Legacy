@@ -23,14 +23,14 @@
     </nav>
     
     <main>
-        <div class="search-container" id="searchContainer" style="display: none; background: white; padding: 10px 20px; border-radius: 10px; margin-bottom: 20px; box-shadow: 0px 4px 10px rgba(0, 0, 0, 0.05); align-items: center; position: relative;">
-            <span style="color: #007BFF; font-weight: bold; font-size: 18px; position: absolute; left: 32px;">@</span>
-            <input type="text" id="searchUserInput" placeholder="Search a senior's username..." style="width: 100%; padding: 12px 12px 12px 30px; border: 1px solid #ddd; border-radius: 20px; font-size: 15px; outline: none; box-sizing: border-box;">
-            <button id="clearSearchBtn" style="display: none; position: absolute; right: 30px; background: #ff4d4d; color: white; border: none; border-radius: 50%; width: 24px; height: 24px; cursor: pointer; font-weight: bold; line-height: 1;">✕</button>
+        <div class="search-container" id="searchContainer" style="display: none; background: white; padding: 12px 20px; border-radius: 20px; margin-bottom: 25px; box-shadow: 0px 8px 24px rgba(149, 157, 165, 0.1); align-items: center; position: relative;">
+            <span style="color: #6c5ce7; font-weight: 700; font-size: 18px; position: absolute; left: 32px;">@</span>
+            <input type="text" id="searchUserInput" placeholder="Search a senior's username..." style="width: 100%; padding: 12px 12px 12px 30px; border: 1px solid #dfe6e9; border-radius: 20px; font-size: 15px; outline: none; box-sizing: border-box; background: #f8fafc;">
+            <button id="clearSearchBtn" style="display: none; position: absolute; right: 30px; background: #ff4757; color: white; border: none; border-radius: 50%; width: 24px; height: 24px; cursor: pointer; font-weight: bold; line-height: 1; transition: 0.2s;">✕</button>
         </div>
 
         <div class="feed-container" id="feedContainer">
-            <h3 style="color: #666;">Loading advice from seniors...</h3>
+            <h3 style="color: #a4b0be;">Loading advice from seniors...</h3>
         </div>
     </main>
 
@@ -38,7 +38,7 @@
         <div class="modal-content">
             <div class="modal-header">
                 <button id="closeModalBtn" class="cancel-btn">Cancel</button>
-                <h3 style="margin: 0;">Create Post</h3>
+                <h3 style="margin: 0; font-weight: 800; color: #2d3436;">Create Post</h3>
                 <button id="submitPostBtn" class="post-btn">Post</button>
             </div>
             
@@ -61,7 +61,7 @@
     <div id="viewPostModal" class="modal-overlay">
         <div class="modal-content" style="max-height: 90vh; overflow-y: auto;">
             <div class="modal-header">
-                <h3 style="margin: 0;">Post Details</h3>
+                <h3 style="margin: 0; font-weight: 800; color: #2d3436;">Post Details</h3>
                 <button id="closeViewModalBtn" class="cancel-btn">Close</button>
             </div>
             <div id="fullPostContent"></div>
@@ -71,23 +71,35 @@
     <div id="profileModal" class="modal-overlay">
         <div class="modal-content" style="max-height: 90vh; overflow-y: auto; text-align: center;">
             <div class="modal-header">
-                <h3 style="margin: 0;">My Profile</h3>
+                <h3 style="margin: 0; font-weight: 800; color: #2d3436;">My Profile</h3>
                 <button id="closeProfileBtn" class="cancel-btn">Close</button>
             </div>
             <div style="padding: 20px 0;">
-                <div style="font-size: 50px; margin-bottom: 10px;">👤</div>
-                <h2 id="profileNicknameDisplay" style="margin: 0; color: #007BFF;">Loading...</h2>
-                <p id="profileEmailDisplay" style="color: #666; font-size: 14px; margin-top: 5px;"></p>
-                <button id="actualLogoutBtn" style="background: #ff4d4d; color: white; border: none; padding: 8px 20px; border-radius: 20px; cursor: pointer; font-weight: bold; margin-top: 10px;">Log Out</button>
-            </div>
-            <hr style="border: 0; border-top: 1px solid #eee; margin: 20px 0;">
-            <h3 style="text-align: left; margin-bottom: 15px;">My Posts</h3>
+                <div style="font-size: 55px; margin-bottom: 10px;">👤</div>
+                <h2 id="profileNicknameDisplay" style="margin: 0; color: #6c5ce7; font-weight: 700;">Loading...</h2>
+                <p id="profileEmailDisplay" style="color: #a4b0be; font-size: 14px; margin-top: 5px; font-weight: 600;"></p>
+                
+                <div id="editProfileForm" class="edit-profile-form">
+                    <input type="text" id="editNicknameInput" placeholder="New Username">
+                    <span id="editFeedback" style="font-size: 12px; color: #a4b0be; max-width: 80%; line-height: 1.4;">Must have numeric, small, capital, and special char (@#$&-_). 3-15 chars, no spaces.</span>
+                    <div class="edit-controls">
+                        <button id="saveProfileBtn" class="save-btn">Save</button>
+                        <button id="cancelEditBtn" class="cancel-edit-btn">Cancel</button>
+                    </div>
+                </div>
+                <div class="profile-actions" id="profileActionButtons">
+                    <button id="editProfileBtn" class="edit-profile-btn">Edit Profile</button>
+                    <button id="actualLogoutBtn">Log Out</button>
+                </div>
+                </div>
+            <hr style="border: 0; border-top: 2px solid #f0f2f5; margin: 20px 0;">
+            <h3 style="text-align: left; margin-bottom: 15px; color: #2d3436; font-weight: 800;">My Posts</h3>
             <div id="myPostsContainer" style="text-align: left;"></div>
         </div>
     </div>
 
     <nav class="bottom-bar">
-        <div class="nav-item">
+        <div class="nav-item" id="homeBtn">
             <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                 <path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"></path>
                 <polyline points="9 22 9 12 15 12 15 22"></polyline>
