@@ -1,8 +1,9 @@
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-app.js";
-import { getAuth, createUserWithEmailAndPassword, signInWithEmailAndPassword, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-auth.js";
+// --- NEW: Added 'sendEmailVerification' to the import list below ---
+import { getAuth, createUserWithEmailAndPassword, signInWithEmailAndPassword, onAuthStateChanged, signOut, sendEmailVerification } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-auth.js";
 import { getFirestore, doc, setDoc, getDoc, collection, addDoc, getDocs, query, orderBy, deleteDoc, where, updateDoc } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-firestore.js";
 
-// 1. FIREBASE SETUP
+//FIREBASE
 const firebaseConfig = {
   apiKey: "AIzaSyDzSxbvPdtxUaFgnUu8IDdeQ_c56eWZOFw",
   authDomain: "senior-s-legacy-3ced0.firebaseapp.com",
@@ -16,13 +17,11 @@ const app = initializeApp(firebaseConfig);
 const auth = getAuth(app);
 const db = getFirestore(app);
 
-// 2. PAGE DETECTORS
+//page detectors
 const isLoginPage = document.getElementById("actionBtn") !== null;
 const isHomePage = document.getElementById("profileBtn") !== null;
 
-// ==========================================
-// 3. LOGIN PAGE LOGIC (index.html)
-// ==========================================
+//Login page index file
 if (isLoginPage) {
     const togglePassword = document.getElementById("togglePassword");
     const passwordInput = document.getElementById("passwordInput");
@@ -156,7 +155,16 @@ if (isLoginPage) {
 
         if (isLoginMode) {
             signInWithEmailAndPassword(auth, email, password)
-                .then(() => {
+                .then(async (userCredential) => {
+                    // --- NEW: EMAIL VERIFICATION CHECK ON LOGIN ---
+                    if (!userCredential.user.emailVerified) {
+                        await signOut(auth); // Kick them back out!
+                        messageBox.style.color = "#ff4757";
+                        messageBox.innerText = "Access Denied: Please check your email inbox and verify your link first!";
+                        return;
+                    }
+                    // ----------------------------------------------
+                    
                     messageBox.style.color = "#2ed573";
                     messageBox.innerText = "Successfully logged in!";
                     window.location.href = "home.html";
@@ -187,19 +195,25 @@ if (isLoginPage) {
             if (parseInt(batchYearStr) >= parseInt(firstYearPrefix)) userRole = "junior";
 
             createUserWithEmailAndPassword(auth, email, password)
-                .then((userCredential) => {
-                    return setDoc(doc(db, "users", userCredential.user.uid), {
+                .then(async (userCredential) => {
+                    await setDoc(doc(db, "users", userCredential.user.uid), {
                         email: userCredential.user.email,
                         role: userRole,
                         rollNumber: rollNumber,
                         nickname: nickname, 
                         createdAt: new Date()
                     });
-                })
-                .then(() => {
+                    
+                    // --- NEW: SEND THE VERIFICATION LINK ---
+                    await sendEmailVerification(userCredential.user);
+                    await signOut(auth); // Log them out immediately so they can't sneak in
+                    
                     messageBox.style.color = "#2ed573";
-                    messageBox.innerText = `Success!`;
-                    window.location.href = "home.html";
+                    messageBox.innerText = "Success! We sent a verification link to your university email. (Note: Please check your Spam or Junk folder if you don't see it!)";
+                    
+                    // Automatically switch the UI back to Login Mode so they are ready
+                    setTimeout(() => { toggleLink.click(); }, 3000); 
+                    // ---------------------------------------
                 })
                 .catch((error) => {
                     messageBox.style.color = "#ff4757";
@@ -213,9 +227,7 @@ if (isLoginPage) {
     });
 }
 
-// ==========================================
-// 4. HOME PAGE LOGIC (home.html)
-// ==========================================
+//home page logic home file
 if (isHomePage) {
     const writeAdviceBtn = document.getElementById("writeAdviceBtn");
     const profileBtn = document.getElementById("profileBtn");
@@ -305,9 +317,7 @@ if (isHomePage) {
         loadPosts(selectedCategory);
     });
 
-    // ------------------------------------------
-    // LOAD MAIN FEED
-    // ------------------------------------------
+    // Loading main feed
     async function loadPosts(categoryFilter) {
         feedContainer.innerHTML = '<h3 style="color: #a4b0be; text-align:center;">Loading advice...</h3>';
         try {
@@ -429,11 +439,17 @@ if (isHomePage) {
         });
     });
 
-    // ------------------------------------------
-    // AUTHENTICATION GUARD & NICKNAME RETRIEVAL
-    // ------------------------------------------
+    //authentication guard & nickname
     onAuthStateChanged(auth, async (user) => {
         if (user) {
+            // --- NEW: EXTRA BOUNCER CHECK FOR THE HOMEPAGE ---
+            if (!user.emailVerified) {
+                await signOut(auth);
+                window.location.href = "index.html";
+                return;
+            }
+            // -------------------------------------------------
+            
             try {
                 const docRef = doc(db, "users", user.uid);
                 const docSnap = await getDoc(docRef);
@@ -479,9 +495,7 @@ if (isHomePage) {
         }
     });
 
-    // ------------------------------------------
-    // PROFILE MODAL LOGIC 
-    // ------------------------------------------
+    //profile model logic
     profileBtn.addEventListener("click", () => {
         profileModal.style.display = "flex";
         profileNicknameDisplay.innerText = currentUserNickname;
@@ -641,9 +655,7 @@ if (isHomePage) {
     }
 
 
-    // ==========================================
-    // 5. MODAL & POSTING LOGIC
-    // ==========================================
+    //model and posting logic
     const postModal = document.getElementById("postModal");
     const closeModalBtn = document.getElementById("closeModalBtn");
     const submitPostBtn = document.getElementById("submitPostBtn");
