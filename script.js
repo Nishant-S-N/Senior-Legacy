@@ -1,5 +1,6 @@
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-app.js";
-import { getAuth, createUserWithEmailAndPassword, signInWithEmailAndPassword, onAuthStateChanged, signOut, sendEmailVerification } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-auth.js";
+// --- UPDATED IMPORT: Added sendPasswordResetEmail ---
+import { getAuth, createUserWithEmailAndPassword, signInWithEmailAndPassword, onAuthStateChanged, signOut, sendEmailVerification, sendPasswordResetEmail } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-auth.js";
 import { getFirestore, doc, setDoc, getDoc, collection, addDoc, getDocs, query, orderBy, deleteDoc, where, updateDoc } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-firestore.js";
 
 //FIREBASE
@@ -34,6 +35,7 @@ if (isLoginPage) {
     const usernameInput = document.getElementById("usernameInput");
     
     const usernameFeedback = document.getElementById("usernameFeedback");
+    const forgotPasswordLink = document.getElementById("forgotPasswordLink"); // NEW
     let usernameTypingTimer; 
 
     let isLoginMode = false; 
@@ -83,6 +85,7 @@ if (isLoginPage) {
         togglePassword.innerText = type === "password" ? "👁️" : "🙈";
     });
 
+    // --- UPDATED TOGGLE LOGIC: Hides/Shows the Forgot Password button ---
     toggleLink.addEventListener("click", () => {
         isLoginMode = !isLoginMode; 
         messageBox.innerText = ""; 
@@ -97,14 +100,41 @@ if (isLoginPage) {
             questionText.innerText = "Need an account?";
             toggleLink.innerText = "Sign Up here";
             usernameGroup.style.display = "none"; 
+            if(forgotPasswordLink) forgotPasswordLink.style.display = "inline-block"; // SHOW
         } else {
             formTitle.innerText = "Join Senior's Legacy";
             actionBtn.innerText = "Sign Up";
             questionText.innerText = "Already signed up?";
             toggleLink.innerText = "Login here";
             usernameGroup.style.display = "block"; 
+            if(forgotPasswordLink) forgotPasswordLink.style.display = "none"; // HIDE
         }
     });
+
+    // --- NEW: Forgot Password Button Logic ---
+    if (forgotPasswordLink) {
+        forgotPasswordLink.addEventListener("click", async () => {
+            const email = document.getElementById("emailInput").value.trim();
+            if (!email) {
+                messageBox.style.color = "#ff4757";
+                messageBox.innerText = "Please enter your university email in the box first to reset your password.";
+                return;
+            }
+            
+            messageBox.style.color = "#2d3436";
+            messageBox.innerText = "Sending password reset link...";
+
+            try {
+                await sendPasswordResetEmail(auth, email);
+                messageBox.style.color = "#2ed573";
+                messageBox.innerText = "Password reset link sent! Please check your university email (and Spam folder).";
+            } catch (error) {
+                console.error("Reset Error:", error);
+                messageBox.style.color = "#ff4757";
+                messageBox.innerText = "Error: Could not send link. Ensure this email is registered.";
+            }
+        });
+    }
 
     actionBtn.addEventListener("click", async () => {
         const email = document.getElementById("emailInput").value.trim();
@@ -187,7 +217,8 @@ if (isLoginPage) {
                         role: userRole,
                         rollNumber: rollNumber,
                         nickname: nickname,
-                        bio: "No bio yet.", // NEW: Default Bio on signup
+                        bio: "No bio yet.", 
+                        profilePic: null, 
                         createdAt: new Date()
                     });
                     
@@ -224,7 +255,7 @@ if (isHomePage) {
     
     const profileNicknameDisplay = document.getElementById("profileNicknameDisplay");
     const profileEmailDisplay = document.getElementById("profileEmailDisplay");
-    const profileBioDisplay = document.getElementById("profileBioDisplay"); // NEW
+    const profileBioDisplay = document.getElementById("profileBioDisplay"); 
     const myPostsContainer = document.getElementById("myPostsContainer");
 
     const searchUserInput = document.getElementById("searchUserInput");
@@ -235,23 +266,33 @@ if (isHomePage) {
     let activeSearchQuery = "";
     let selectedCategory = "All";
     let currentUserNickname = "Senior"; 
-    let currentUserBio = "No bio yet."; // NEW
+    let currentUserBio = "No bio yet."; 
+    let currentUserProfilePic = null; 
     let currentViewingPostId = null; 
 
     const editProfileBtn = document.getElementById("editProfileBtn");
     const editProfileForm = document.getElementById("editProfileForm");
     const profileActionButtons = document.getElementById("profileActionButtons");
     const editNicknameInput = document.getElementById("editNicknameInput");
-    const editBioInput = document.getElementById("editBioInput"); // NEW
+    const editBioInput = document.getElementById("editBioInput"); 
     const saveProfileBtn = document.getElementById("saveProfileBtn");
     const cancelEditBtn = document.getElementById("cancelEditBtn");
     const editFeedback = document.getElementById("editFeedback");
 
     const homeBtn = document.getElementById("homeBtn");
 
+    // Helper Function to generate beautiful Avatars (Defaulting to Person Icon)
+    function getAvatarHtml(picUrl, displayName, size = 36) {
+        if (picUrl) {
+            return `<img src="${picUrl}" style="width: ${size}px; height: ${size}px; border-radius: 50%; object-fit: cover; margin-right: 12px; cursor: pointer; border: 1px solid #dfe6e9;" class="feed-avatar" data-username="${displayName}">`;
+        } else {
+            return `<div style="width: ${size}px; height: ${size}px; border-radius: 50%; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; display: flex; justify-content: center; align-items: center; font-size: ${size/1.8}px; margin-right: 12px; cursor: pointer; box-shadow: 0 2px 5px rgba(118, 75, 162, 0.2);" class="feed-avatar" data-username="${displayName}">👤</div>`;
+        }
+    }
+
     // Clickable Usernames Global Logic
     function triggerProfileSearch(username) {
-        viewPostModal.style.display = "none"; // Close modal if open
+        viewPostModal.style.display = "none"; 
         searchContainer.style.display = "flex";
         searchUserInput.value = username;
         activeSearchQuery = username.toLowerCase();
@@ -325,7 +366,7 @@ if (isHomePage) {
                 if (activeSearchQuery !== "") {
                     if (!displayName.toLowerCase().includes(activeSearchQuery)) return;
                     if (displayName.toLowerCase() === activeSearchQuery.toLowerCase() || searchedUserDisplayName === activeSearchQuery) {
-                        searchedUserDisplayName = displayName; // Get exact capitalization
+                        searchedUserDisplayName = displayName; 
                     }
                 }
 
@@ -342,22 +383,27 @@ if (isHomePage) {
                 return;
             }
 
-            // Generate Public Profile Card with BIO
+            // Generate Public Profile Card with BIO & AVATAR
             if (activeSearchQuery !== "") {
-                let publicBio = "Loading bio...";
+                let publicBio = "No bio yet.";
+                let publicProfilePic = null;
                 try {
                     const userQ = query(collection(db, "users"), where("nickname", "==", searchedUserDisplayName));
                     const userSnap = await getDocs(userQ);
-                    if (!userSnap.empty) publicBio = userSnap.docs[0].data().bio || "No bio yet.";
-                    else publicBio = "No bio yet.";
-                } catch (err) {
-                    publicBio = "No bio yet.";
-                }
+                    if (!userSnap.empty) {
+                        publicBio = userSnap.docs[0].data().bio || "No bio yet.";
+                        publicProfilePic = userSnap.docs[0].data().profilePic || null;
+                    }
+                } catch (err) {}
+
+                let publicPicHtml = publicProfilePic 
+                    ? `<img src="${publicProfilePic}" style="width: 90px; height: 90px; border-radius: 50%; object-fit: cover; margin: 0 auto 15px auto; display: block; border: 3px solid #6c5ce7; box-shadow: 0 4px 15px rgba(108, 92, 231, 0.2);">`
+                    : `<div style="width: 90px; height: 90px; border-radius: 50%; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; display: flex; justify-content: center; align-items: center; font-size: 50px; margin: 0 auto 15px auto; box-shadow: 0 4px 15px rgba(118, 75, 162, 0.3);">👤</div>`;
 
                 const profileHeader = document.createElement("div");
                 profileHeader.style.cssText = "text-align: center; padding: 25px 20px; background: white; border-radius: 24px; margin-bottom: 20px; box-shadow: 0px 8px 24px rgba(149, 157, 165, 0.1);";
                 profileHeader.innerHTML = `
-                    <div style="font-size: 55px; margin-bottom: 10px;">👤</div>
+                    ${publicPicHtml}
                     <h2 style="margin: 0; color: #6c5ce7; font-weight: 700;">@${searchedUserDisplayName}</h2>
                     <p style="color: #636e72; font-size: 14px; margin: 15px 10px; font-style: italic; line-height: 1.4; white-space: pre-wrap;">${publicBio}</p>
                     <hr style="border: 0; border-top: 2px solid #f0f2f5; margin: 20px 0;">
@@ -372,6 +418,7 @@ if (isHomePage) {
                 const postId = item.id;
                 const displayName = item.displayName;
                 const date = post.createdAt ? post.createdAt.toDate().toLocaleDateString() : "Just now";
+                const avatarHtml = getAvatarHtml(post.authorProfilePic, displayName, 42);
                 
                 let mediaHtml = ''; let fullMediaHtml = '';
                 if (post.mediaUrl) {
@@ -390,32 +437,44 @@ if (isHomePage) {
                 const postCard = document.createElement("div");
                 postCard.className = "post-card";
                 postCard.innerHTML = `
-                    <div class="post-header">
-                        <strong class="feed-username" data-username="${displayName}">${displayName}</strong> 
-                        <span class="post-date">${date}</span>
+                    <div class="post-header" style="display: flex; align-items: center; justify-content: flex-start; gap: 4px; margin-bottom: 12px;">
+                        ${avatarHtml}
+                        <div style="display: flex; flex-direction: column; flex-grow: 1;">
+                            <strong class="feed-username" data-username="${displayName}">${displayName}</strong> 
+                            <span class="post-date" style="margin-top: 2px;">${date}</span>
+                        </div>
                     </div>
                     <div class="post-text">${post.text.length > 100 ? post.text.substring(0, 100) + '...' : post.text}</div>
                     ${mediaHtml}
-                    <div class="post-tags">${(post.categories || []).map(cat => cat !== "All" ? `<span class="tag">#${cat}</span>` : "").join("")}</div>
-                    <div style="border-top: 2px solid #f0f2f5; margin-top: 15px; padding-top: 12px; color: #a4b0be; font-size: 13px; font-weight: 700; display: flex; align-items: center;">💬 View Thread / Reply</div>
+                    <div class="post-tags">
+                        ${(post.categories || []).map(cat => cat !== "All" ? `<span class="tag">#${cat}</span>` : "").join("")}
+                    </div>
+                    <div style="border-top: 2px solid #f0f2f5; margin-top: 15px; padding-top: 12px; color: #a4b0be; font-size: 13px; font-weight: 700; display: flex; align-items: center;">
+                        💬 View Thread / Reply
+                    </div>
                 `;
 
                 // Clickable Username (Feed)
-                postCard.querySelector('.feed-username').addEventListener('click', (e) => {
-                    e.stopPropagation(); // Prevents opening the post thread
-                    triggerProfileSearch(displayName);
+                postCard.querySelectorAll('.feed-username, .feed-avatar').forEach(el => {
+                    el.addEventListener('click', (e) => {
+                        e.stopPropagation();
+                        triggerProfileSearch(displayName);
+                    });
                 });
 
                 postCard.addEventListener("click", () => {
                     let deleteBtnHtml = "";
                     if (auth.currentUser && auth.currentUser.email === post.authorEmail) {
-                        deleteBtnHtml = `<button id="deleteFeedPostBtn" style="background: linear-gradient(135deg, #ff4757 0%, #ff6b81 100%); color: white; border: none; padding: 12px; border-radius: 12px; cursor: pointer; margin-top: 20px; width: 100%; font-weight: bold; font-size: 16px;">🗑️ Delete Main Post</button>`;
+                        deleteBtnHtml = `<button id="deleteFeedPostBtn" style="background: linear-gradient(135deg, #ff4757 0%, #ff6b81 100%); color: white; border: none; padding: 12px; border-radius: 12px; cursor: pointer; margin-top: 20px; width: 100%; font-weight: bold; font-size: 16px; box-shadow: 0 4px 15px rgba(255, 71, 87, 0.3);">🗑️ Delete Main Post</button>`;
                     }
 
                     fullPostContent.innerHTML = `
-                        <div class="post-header">
-                            <strong class="feed-username" data-username="${displayName}">${displayName}</strong> 
-                            <span class="post-date">${date}</span>
+                        <div class="post-header" style="display: flex; align-items: center; justify-content: flex-start; gap: 4px; margin-bottom: 12px;">
+                            ${avatarHtml}
+                            <div style="display: flex; flex-direction: column; flex-grow: 1;">
+                                <strong class="feed-username" data-username="${displayName}">${displayName}</strong> 
+                                <span class="post-date" style="margin-top: 2px;">${date}</span>
+                            </div>
                         </div>
                         <div class="post-text" style="font-size: 18px;">${post.text}</div>
                         ${fullMediaHtml}
@@ -424,9 +483,11 @@ if (isHomePage) {
                     `;
 
                     // Clickable Username (Inside Post Modal)
-                    fullPostContent.querySelector('.feed-username').addEventListener('click', (e) => {
-                        e.stopPropagation();
-                        triggerProfileSearch(displayName);
+                    fullPostContent.querySelectorAll('.feed-username, .feed-avatar').forEach(el => {
+                        el.addEventListener('click', (e) => {
+                            e.stopPropagation();
+                            triggerProfileSearch(displayName);
+                        });
                     });
                     
                     currentViewingPostId = postId;
@@ -481,11 +542,13 @@ if (isHomePage) {
                 if (docSnap.exists()) {
                     role = docSnap.data().role;
                     currentUserNickname = docSnap.data().nickname || docSnap.data().rollNumber; 
-                    currentUserBio = docSnap.data().bio || "No bio yet."; // Fetch Bio
+                    currentUserBio = docSnap.data().bio || "No bio yet."; 
+                    currentUserProfilePic = docSnap.data().profilePic || null; // Fetch Pic
                 } else {
                     const rollNumber = user.email.substring(0, 11);
                     currentUserNickname = rollNumber; 
                     currentUserBio = "No bio yet.";
+                    currentUserProfilePic = null;
                     
                     let firstYearPrefix = new Date().getFullYear().toString().slice(-2);
                     if (new Date().getMonth() < 6) firstYearPrefix = (new Date().getFullYear() - 1).toString().slice(-2);
@@ -497,6 +560,7 @@ if (isHomePage) {
                         rollNumber: rollNumber,
                         nickname: currentUserNickname,
                         bio: currentUserBio,
+                        profilePic: currentUserProfilePic,
                         createdAt: new Date()
                     });
                 }
@@ -514,12 +578,144 @@ if (isHomePage) {
         }
     });
 
+    // --- NEW: PROFILE PICTURE UPLOAD & DELETE LOGIC ---
+    const profilePicInput = document.getElementById("profilePicInput");
+    const profilePicDisplay = document.getElementById("profilePicDisplay");
+    const defaultAvatarDisplay = document.getElementById("defaultAvatarDisplay");
+    const uploadingPicText = document.getElementById("uploadingPicText");
+    const profileAvatarContainer = document.getElementById("profileAvatarContainer");
+    const removeProfilePicBtn = document.getElementById("removeProfilePicBtn");
+
+    function updateProfilePicUI(url) {
+        if (url) {
+            profilePicDisplay.src = url;
+            profilePicDisplay.style.display = "inline-block";
+            defaultAvatarDisplay.style.display = "none";
+            if (removeProfilePicBtn) removeProfilePicBtn.style.display = "flex"; // Show Delete Btn
+        } else {
+            profilePicDisplay.style.display = "none";
+            defaultAvatarDisplay.style.display = "flex"; 
+            defaultAvatarDisplay.innerText = "👤";
+            if (removeProfilePicBtn) removeProfilePicBtn.style.display = "none"; // Hide Delete Btn
+        }
+    }
+
+    profileAvatarContainer.addEventListener("click", () => {
+        profilePicInput.click();
+    });
+
+    // Delete Button Logic
+    if (removeProfilePicBtn) {
+        removeProfilePicBtn.addEventListener("click", async (e) => {
+            e.stopPropagation(); // Stops the file upload window from opening!
+            
+            if (confirm("Are you sure you want to remove your profile picture?")) {
+                uploadingPicText.style.display = "block";
+                uploadingPicText.innerText = "Removing picture...";
+                
+                try {
+                    await updateDoc(doc(db, "users", auth.currentUser.uid), {
+                        profilePic: null
+                    });
+
+                    // Force update all old posts and comments
+                    const postsQuery = query(collection(db, "posts"), where("authorEmail", "==", auth.currentUser.email));
+                    const postsSnapshot = await getDocs(postsQuery);
+                    postsSnapshot.forEach(async (postDoc) => {
+                        await updateDoc(doc(db, "posts", postDoc.id), { authorProfilePic: null });
+                    });
+
+                    const commentsQuery = query(collection(db, "comments"), where("authorEmail", "==", auth.currentUser.email));
+                    const commentsSnapshot = await getDocs(commentsQuery);
+                    commentsSnapshot.forEach(async (commentDoc) => {
+                        await updateDoc(doc(db, "comments", commentDoc.id), { authorProfilePic: null });
+                    });
+
+                    currentUserProfilePic = null;
+                    updateProfilePicUI(null);
+                    
+                    loadPosts(selectedCategory);
+                    loadMyPosts();
+                    
+                } catch (error) {
+                    console.error("Error removing picture:", error);
+                    alert("Failed to remove profile picture.");
+                } finally {
+                    uploadingPicText.style.display = "none";
+                    uploadingPicText.innerText = "Uploading to server..."; // Reset text
+                }
+            }
+        });
+    }
+
+    // Upload Button Logic
+    profilePicInput.addEventListener("change", async () => {
+        if (profilePicInput.files.length === 0) return;
+        const file = profilePicInput.files[0];
+        
+        uploadingPicText.style.display = "block";
+        uploadingPicText.innerText = "Uploading to server...";
+        
+        try {
+            const cloudName = "dnmmkwbjr"; 
+            const uploadPreset = "ml_default"; 
+
+            const formData = new FormData();
+            formData.append("file", file);
+            formData.append("upload_preset", uploadPreset);
+
+            const cloudinaryResponse = await fetch(`https://api.cloudinary.com/v1_1/${cloudName}/auto/upload`, {
+                method: 'POST',
+                body: formData
+            });
+
+            const cloudData = await cloudinaryResponse.json();
+            if (cloudData.error) throw new Error(cloudData.error.message);
+
+            const newPicUrl = cloudData.secure_url;
+
+            // Save to User Database
+            await updateDoc(doc(db, "users", auth.currentUser.uid), {
+                profilePic: newPicUrl
+            });
+
+            // Force update all old posts and comments to instantly show new picture
+            const postsQuery = query(collection(db, "posts"), where("authorEmail", "==", auth.currentUser.email));
+            const postsSnapshot = await getDocs(postsQuery);
+            postsSnapshot.forEach(async (postDoc) => {
+                await updateDoc(doc(db, "posts", postDoc.id), { authorProfilePic: newPicUrl });
+            });
+
+            const commentsQuery = query(collection(db, "comments"), where("authorEmail", "==", auth.currentUser.email));
+            const commentsSnapshot = await getDocs(commentsQuery);
+            commentsSnapshot.forEach(async (commentDoc) => {
+                await updateDoc(doc(db, "comments", commentDoc.id), { authorProfilePic: newPicUrl });
+            });
+
+            currentUserProfilePic = newPicUrl;
+            updateProfilePicUI(currentUserProfilePic);
+            
+            loadPosts(selectedCategory);
+            loadMyPosts();
+            
+        } catch (error) {
+            console.error(error);
+            alert("Failed to upload profile picture.");
+        } finally {
+            uploadingPicText.style.display = "none";
+            profilePicInput.value = "";
+        }
+    });
+    // ------------------------------------------
+
     //profile logic
     profileBtn.addEventListener("click", () => {
         profileModal.style.display = "flex";
         profileNicknameDisplay.innerText = currentUserNickname;
         profileEmailDisplay.innerText = auth.currentUser.email;
-        profileBioDisplay.innerText = currentUserBio; // Display Bio
+        profileBioDisplay.innerText = currentUserBio; 
+        
+        updateProfilePicUI(currentUserProfilePic); 
         
         cancelEditBtn.click();
         loadMyPosts(); 
@@ -534,6 +730,7 @@ if (isHomePage) {
     });
 
     editProfileBtn.addEventListener("click", () => {
+        profileAvatarContainer.style.display = "none"; // Hide picture while editing name
         profileNicknameDisplay.style.display = "none";
         profileEmailDisplay.style.display = "none";
         profileBioDisplay.style.display = "none";
@@ -541,13 +738,14 @@ if (isHomePage) {
         editProfileForm.style.display = "flex";
         
         editNicknameInput.value = currentUserNickname;
-        editBioInput.value = currentUserBio === "No bio yet." ? "" : currentUserBio; // Load Bio into box
+        editBioInput.value = currentUserBio === "No bio yet." ? "" : currentUserBio; 
         
         editFeedback.style.color = "#a4b0be";
         editFeedback.innerText = "Must have numeric, small, capital, and special char (@#$&-_). 3-15 chars, no spaces.";
     });
 
     cancelEditBtn.addEventListener("click", () => {
+        profileAvatarContainer.style.display = "inline-block";
         profileNicknameDisplay.style.display = "block";
         profileEmailDisplay.style.display = "block";
         profileBioDisplay.style.display = "block";
@@ -559,7 +757,6 @@ if (isHomePage) {
         const newNickname = editNicknameInput.value.trim();
         const newBio = editBioInput.value.trim();
         
-        // If nothing changed, just cancel
         if (newNickname === currentUserNickname && newBio === (currentUserBio === "No bio yet." ? "" : currentUserBio)) {
             cancelEditBtn.click();
             return;
@@ -567,7 +764,6 @@ if (isHomePage) {
 
         saveProfileBtn.disabled = true;
 
-        // Only validate Nickname uniqueness if they actually changed it
         if (newNickname !== currentUserNickname) {
             const nicknameRegex = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@#$&-_])[A-Za-z\d@#$&-_]{3,15}$/;
             if (!nicknameRegex.test(newNickname)) {
@@ -598,7 +794,7 @@ if (isHomePage) {
         try {
             await updateDoc(doc(db, "users", auth.currentUser.uid), {
                 nickname: newNickname,
-                bio: newBio || "No bio yet." // Save Bio
+                bio: newBio || "No bio yet." 
             });
 
             if (newNickname !== currentUserNickname) {
@@ -607,13 +803,20 @@ if (isHomePage) {
                 postsSnapshot.forEach(async (postDoc) => {
                     await updateDoc(doc(db, "posts", postDoc.id), { authorName: newNickname });
                 });
+                
+                const commentsQuery = query(collection(db, "comments"), where("authorEmail", "==", auth.currentUser.email));
+                const commentsSnapshot = await getDocs(commentsQuery);
+                commentsSnapshot.forEach(async (commentDoc) => {
+                    await updateDoc(doc(db, "comments", commentDoc.id), { authorName: newNickname });
+                });
             }
 
             currentUserNickname = newNickname;
-            currentUserBio = newBio || "No bio yet."; // Update local state
+            currentUserBio = newBio || "No bio yet."; 
             profileNicknameDisplay.innerText = currentUserNickname;
             profileBioDisplay.innerText = currentUserBio;
             
+            updateProfilePicUI(currentUserProfilePic);
             cancelEditBtn.click(); 
             loadPosts(selectedCategory); 
             loadMyPosts(); 
@@ -643,6 +846,7 @@ if (isHomePage) {
                 if (post.authorEmail === auth.currentUser.email) {
                     myCount++;
                     const date = post.createdAt ? post.createdAt.toDate().toLocaleDateString() : "Just now";
+                    const avatarHtml = getAvatarHtml(post.authorProfilePic, post.authorName || currentUserNickname, 42);
                     
                     let mediaHtml = ''; let fullMediaHtml = '';
                     if (post.mediaUrl) {
@@ -677,9 +881,12 @@ if (isHomePage) {
                         let deleteBtnHtml = `<button id="deleteProfilePostBtn" style="background: linear-gradient(135deg, #ff4757 0%, #ff6b81 100%); color: white; border: none; padding: 12px; border-radius: 12px; cursor: pointer; margin-top: 20px; width: 100%; font-weight: bold; font-size: 16px;">🗑️ Delete Main Post</button>`;
 
                         fullPostContent.innerHTML = `
-                            <div class="post-header">
-                                <strong class="feed-username" data-username="${post.authorName || currentUserNickname}">${post.authorName || currentUserNickname}</strong> 
-                                <span class="post-date">${date}</span>
+                            <div class="post-header" style="display: flex; align-items: center; justify-content: flex-start; gap: 4px; margin-bottom: 12px;">
+                                ${avatarHtml}
+                                <div style="display: flex; flex-direction: column; flex-grow: 1;">
+                                    <strong class="feed-username" data-username="${post.authorName || currentUserNickname}">${post.authorName || currentUserNickname}</strong> 
+                                    <span class="post-date" style="margin-top: 2px;">${date}</span>
+                                </div>
                             </div>
                             <div class="post-text" style="font-size: 18px;">${post.text}</div>
                             ${fullMediaHtml}
@@ -687,10 +894,12 @@ if (isHomePage) {
                             ${deleteBtnHtml}
                         `;
                         
-                        fullPostContent.querySelector('.feed-username').addEventListener('click', (e) => {
-                            e.stopPropagation();
-                            profileModal.style.display = "none"; // Close profile modal first
-                            triggerProfileSearch(post.authorName || currentUserNickname);
+                        fullPostContent.querySelectorAll('.feed-username, .feed-avatar').forEach(el => {
+                            el.addEventListener('click', (e) => {
+                                e.stopPropagation();
+                                profileModal.style.display = "none"; 
+                                triggerProfileSearch(post.authorName || currentUserNickname);
+                            });
                         });
 
                         currentViewingPostId = postId;
@@ -797,6 +1006,7 @@ if (isHomePage) {
                 categories: postCategories,
                 authorEmail: auth.currentUser.email,
                 authorName: currentUserNickname, 
+                authorProfilePic: currentUserProfilePic, 
                 createdAt: new Date(),
                 mediaUrl: mediaUrl,
                 mediaType: mediaType
@@ -866,6 +1076,7 @@ if (isHomePage) {
                     text: text,
                     authorEmail: auth.currentUser.email,
                     authorName: currentUserNickname, 
+                    authorProfilePic: currentUserProfilePic, 
                     createdAt: new Date(),
                     mediaUrl: mediaUrl,
                     mediaType: mediaType
@@ -897,6 +1108,7 @@ if (isHomePage) {
 
             commentsArray.forEach((comment) => {
                 const date = comment.createdAt ? comment.createdAt.toDate().toLocaleDateString() : "Just now";
+                const avatarHtml = getAvatarHtml(comment.authorProfilePic, comment.authorName, 28);
                 
                 let mediaHtml = '';
                 if (comment.mediaUrl) {
@@ -913,18 +1125,23 @@ if (isHomePage) {
                 const commentDiv = document.createElement("div");
                 commentDiv.className = "comment-card";
                 commentDiv.innerHTML = `
-                    <div class="comment-header">
+                    <div class="comment-header" style="justify-content: flex-start; gap: 8px;">
+                        ${avatarHtml}
                         <strong class="feed-username" data-username="${comment.authorName}">${comment.authorName}</strong>
-                        <div><span class="comment-date">${date}</span>${deleteHtml}</div>
+                        <div style="margin-left: auto;">
+                            <span class="comment-date">${date}</span>${deleteHtml}
+                        </div>
                     </div>
-                    <div class="comment-text">${comment.text}</div>
-                    ${mediaHtml}
+                    <div class="comment-text" style="margin-left: 40px;">${comment.text}</div>
+                    <div style="margin-left: 40px;">${mediaHtml}</div>
                 `;
                 
                 // Clickable Username (In Comments)
-                commentDiv.querySelector('.feed-username').addEventListener('click', (e) => {
-                    e.stopPropagation();
-                    triggerProfileSearch(comment.authorName);
+                commentDiv.querySelectorAll('.feed-username, .feed-avatar').forEach(el => {
+                    el.addEventListener('click', (e) => {
+                        e.stopPropagation();
+                        triggerProfileSearch(comment.authorName);
+                    });
                 });
 
                 commentsContainer.appendChild(commentDiv);
